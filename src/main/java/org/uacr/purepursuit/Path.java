@@ -479,6 +479,10 @@ public class Path {
 
             for (int i = 1; i < mPoints.size() - 1; i++) {
                 Point point = mPoints.get(i);
+//
+//                if (point instanceof WayPathPoint) {
+//                    continue;
+//                }
 
                 Vector middle = new Vector(mPoints.get(i + 1).subtract(mPoints.get(i - 1)));
 
