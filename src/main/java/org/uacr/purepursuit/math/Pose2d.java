@@ -1,4 +1,4 @@
-package org.uacr.purepursuit;
+package org.uacr.purepursuit.math;
 
 /**
  * Pose2d is an add on to the Point class,

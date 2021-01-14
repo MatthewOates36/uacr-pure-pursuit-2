@@ -1,5 +1,7 @@
 package org.uacr.purepursuit;
 
+import org.uacr.purepursuit.math.Point;
+
 public class WayPathPoint extends PathPoint {
 
     private final boolean fHasHeading;

@@ -1,4 +1,6 @@
-package org.uacr.purepursuit;
+package org.uacr.purepursuit.math.spline;
+
+import org.uacr.purepursuit.math.Vector;
 
 import java.util.Arrays;
 
@@ -8,24 +10,10 @@ public class Spline {
     private double[] y;
     private double[] dy;
 
-    public Spline(double[] x, double[] y) {
+    public Spline(double[] x, double[] y, Vector initialSlope) {
         this.x = x;
         this.y = y;
-        dy = getNaturalDerivatives(x, y);
-    }
-
-    public double eval(double xVal) {
-        int i = 1;
-        while (x[i] < xVal) {
-            i++;
-        }
-
-        double t = (xVal - x[i - 1]) / (x[i] - x[i - 1]);
-
-        double a = dy[i - 1] * (x[i] - x[i - 1]) - (y[i] - y[i - 1]);
-        double b = -dy[i] * (x[i] - x[i - 1]) + (y[i] - y[i - 1]);
-
-        return (1 - t) * y[i - 1] + t * y[i] + t * (1 - t) * (a * (1 - t) + b * t);
+        dy = getNaturalDerivatives(x, y, initialSlope);
     }
 
     private static double[] solveMatrix(double[][] matrix) {
@@ -71,7 +59,21 @@ public class Spline {
         matrix[row2] = temp;
     }
 
-    private double[] getNaturalDerivatives(double[] x, double[] y) {
+    public double eval(double xVal) {
+        int i = 1;
+        while (x[i] < xVal) {
+            i++;
+        }
+
+        double t = (xVal - x[i - 1]) / (x[i] - x[i - 1]);
+
+        double a = dy[i - 1] * (x[i] - x[i - 1]) - (y[i] - y[i - 1]);
+        double b = -dy[i] * (x[i] - x[i - 1]) + (y[i] - y[i - 1]);
+
+        return (1 - t) * y[i - 1] + t * y[i] + t * (1 - t) * (a * (1 - t) + b * t);
+    }
+
+    private double[] getNaturalDerivatives(double[] x, double[] y, Vector slope) {
         double[][] matrix = new double[x.length][x.length + 1];
         for (int i = 0; i < x.length; i++) {
             for (int j = 0; j < x.length + 1; j++) {
@@ -86,31 +88,20 @@ public class Spline {
             matrix[i][x.length] = 3 * ((y[i] - y[i - 1]) / ((x[i] - x[i - 1]) * (x[i] - x[i - 1])) + (y[i + 1] - y[i]) / ((x[i + 1] - x[i]) * (x[i + 1] - x[i])));
         }
 
-        matrix[0][0] = 2 / (x[1] - x[0]);
-        matrix[0][1] = 1 / (x[1] - x[0]);
-        matrix[0][x.length] = 3 * (y[1] - y[0]) / ((x[1] - x[0]) * (x[1] - x[0]));
+        double initialXDelta = x[1] - x[0];
+        double initialYDelta = y[1] - y[0];
+
+//        double initialXDelta = slope.getX();
+//        double initialYDelta = slope.getY();
+
+        matrix[0][0] = 2 / initialXDelta;
+        matrix[0][1] = 1 / initialXDelta;
+        matrix[0][x.length] = 3 * (initialYDelta) / Math.pow(initialXDelta, 2);
 
         matrix[x.length - 1][x.length - 2] = 1 / (x[x.length - 1] - x[x.length - 2]);
         matrix[x.length - 1][x.length - 1] = 2 / (x[x.length - 1] - x[x.length - 2]);
         matrix[x.length - 1][x.length] = 3 * (y[x.length - 1] - y[x.length - 2]) / ((x[x.length - 1] - x[x.length - 2]) * (x[x.length - 1] - x[x.length - 2]));
 
         return solveMatrix(matrix);
-    }
-
-    public static void main(String[] args) {
-        double[] x = {0, 1, 2, 3, 4, 5};
-        double[] y = {0, 2, 4, 6, 4, 0};
-        Spline s = new Spline(x, y);
-        double[] res = new double[500];
-        for (int i = 0; i < res.length; i ++) {
-            res[i] = s.eval((((double) i) / 100));
-        }
-        System.out.println(Arrays.toString(res));
-//        System.out.print("[");
-//        for (int i = 0; i < res.length; i ++) {
-//            double xVal = ((double) i) / 100;
-//            System.out.print("(" + xVal + ", " + res[i] + "), ");
-//        }
-//        System.out.println("\b\b]");
     }
 }
