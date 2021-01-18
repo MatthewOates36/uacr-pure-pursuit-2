@@ -1,5 +1,8 @@
 package org.uacr.purepursuit;
 
+import org.uacr.purepursuit.math.Point;
+import org.uacr.purepursuit.math.Vector;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

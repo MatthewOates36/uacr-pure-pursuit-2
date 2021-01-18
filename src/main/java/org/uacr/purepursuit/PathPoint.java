@@ -1,5 +1,7 @@
 package org.uacr.purepursuit;
 
+import org.uacr.purepursuit.math.Point;
+
 /**
  * PathPoint is an add on to the Point class,
  * allowing it to store additional values necessary for the pure pursuit Path class

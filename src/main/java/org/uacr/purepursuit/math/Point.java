@@ -1,4 +1,4 @@
-package org.uacr.purepursuit;
+package org.uacr.purepursuit.math;
 
 import java.util.List;
 

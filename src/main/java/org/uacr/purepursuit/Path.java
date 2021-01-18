@@ -1,5 +1,9 @@
 package org.uacr.purepursuit;
 
+import org.uacr.purepursuit.math.Point;
+import org.uacr.purepursuit.math.Pose2d;
+import org.uacr.purepursuit.math.Vector;
+
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
