@@ -1,4 +1,4 @@
-package org.uacr.purepursuit;
+package org.uacr.purepursuit.math.spline;
 
 import java.util.Arrays;
 
@@ -7,9 +7,13 @@ public class Spline {
     private double[] x;
     private double[] y;
 
+    private boolean isNaturalSpline;
+    private double startingAngle;
+    private double endingAngle;
+
     public Polynomial[] curves;
 
-    public Spline(double[] x, double[] y) {
+    private Spline(double[] x, double[] y, boolean isNaturalSpline, double startingAngle, double endingAngle) {
         if (x.length != y.length) {
             throw new IllegalArgumentException("Must provide same number of x and y values.");
         }
@@ -17,7 +21,20 @@ public class Spline {
         this.x = x;
         this.y = y;
 
+        this.startingAngle = startingAngle;
+        this.endingAngle = endingAngle;
+
+        this.isNaturalSpline = isNaturalSpline;
+
         this.curves = generatePolynomials(this.x, this.y);
+    }
+
+    public Spline(double[] x, double[] y) {
+        this(x, y, true, 0.0, 0.0);
+    }
+
+    public Spline(double[] x, double[] y, double startingAngle, double endingAngle) {
+        this(x, y, false, startingAngle, endingAngle);
     }
 
     public double eval(double input) {
@@ -38,18 +55,34 @@ public class Spline {
         return results;
     }
 
-    private static Polynomial[] generatePolynomials(double[] x, double[] y) {
+    private Polynomial[] generatePolynomials(double[] x, double[] y) {
         final int n = x.length;
         int currentRow = 0;
 
         double[][] equationsMatrix = getZeros(4 * n - 4, 4 * n - 3);
 
         // Boundary conditions
-        // c_0 = 0
-        equationsMatrix[currentRow++][2] = 1;
-        // 0 = 2 c_n-2 + 6 d_n-2 (x_n-1 - x_n-2)
-        equationsMatrix[currentRow][4 * (n - 2) + 2] = 2;
-        equationsMatrix[currentRow++][4 * (n - 2) + 3] = 6 * (x[n - 1] - x[n - 2]);
+        if (isNaturalSpline) {
+            // Natural spline - second derivatives are 0
+            // c_0 = 0
+            equationsMatrix[currentRow++][2] = 1;
+            // 0 = 2 c_n-2 + 6 d_n-2 (x_n-1 - x_n-2)
+            equationsMatrix[currentRow][4 * (n - 2) + 2] = 2;
+            equationsMatrix[currentRow++][4 * (n - 2) + 3] = 6 * (x[n - 1] - x[n - 2]);
+        } else {
+            // First derivatives are set to angles
+            double startingDerivative = Math.tan(Math.toRadians(startingAngle));
+            double endingDerivative = Math.tan(Math.toRadians(endingAngle));
+            System.out.println(startingDerivative);
+            // b_0 = k
+            equationsMatrix[currentRow][1] = 1;
+            equationsMatrix[currentRow++][4 * n - 4] = startingDerivative;
+            // k = b_n-2 + 2 c_n-2 (x_n-1 - x_n-2) + 3 d_n-2 (x_n-1 - x_n-2)^2
+            equationsMatrix[currentRow][4 * (n - 2) + 1] = 1;
+            equationsMatrix[currentRow][4 * (n - 2) + 2] = 2 * (x[n - 1] - x[n - 2]);
+            equationsMatrix[currentRow][4 * (n - 2) + 3] = 3 * Math.pow(x[n - 1] - x[n - 2], 2);
+            equationsMatrix[currentRow++][4 * n - 4] = endingDerivative;
+        }
         for (int i = 0; i < n - 1; i++) {
             // y_i = a_i
             equationsMatrix[currentRow][4 * i] = 1;
@@ -59,7 +92,7 @@ public class Spline {
             equationsMatrix[currentRow][4 * i + 1] = x[i + 1] - x[i];
             equationsMatrix[currentRow][4 * i + 2] = Math.pow(x[i + 1] - x[i], 2);
             equationsMatrix[currentRow][4 * i + 3] = Math.pow(x[i + 1] - x[i], 3);
-            equationsMatrix[currentRow++][4 * n - 4] = y[i+1];
+            equationsMatrix[currentRow++][4 * n - 4] = y[i + 1];
         }
         for (int i = 0; i < n - 2; i++) {
             // 0 = b_i + 2c_i (x_i+1 - x_i) + 3d_i (x_i+1 - x_i)^2 - b_i+1
@@ -72,6 +105,8 @@ public class Spline {
             equationsMatrix[currentRow][4 * i + 3] = 6 * (x[i + 1] - x[i]);
             equationsMatrix[currentRow++][4 * (i + 1) + 2] = -2;
         }
+
+        printArray(equationsMatrix);
 
         Polynomial[] result = new Polynomial[n - 1];
         double[] coefficients = solveMatrix(equationsMatrix);
@@ -184,7 +219,7 @@ public class Spline {
 
         public String toString() {
             String result = "Polynomial of order " + order + ": ";
-            for (int i = 0; i < coefficients.length; i ++) {
+            for (int i = 0; i < coefficients.length; i++) {
                 result += coefficients[i] + "(x-" + offset + ")^" + i + "+ ";
             }
             return result + "\b\b";
@@ -194,9 +229,9 @@ public class Spline {
     public static void main(String[] args) {
         double[] x = new double[]{0, 1, 2, 3, 4, 5};
         double[] y = new double[]{0, 2, 4, 6, 4, 0};
-        Spline s = new Spline(x, y);
+        Spline s = new Spline(x, y, 30, 30);
         double[] testX = new double[500];
-        for (int i = 0; i < 500; i ++) {
+        for (int i = 0; i < 500; i++) {
             testX[i] = ((double) i) / 100;
         }
         System.out.println(Arrays.toString(testX));
