@@ -41,7 +41,7 @@ public class ParametricSpline {
     public ArrayList<Point> getPoints(double spacing) {
         ArrayList<Point> result = new ArrayList<>();
         double length = 0;
-        double target = spacing * 2;
+        double target = 0;
         final double k = 0.001;
         for (double t = 0; t < splineX.getUpperBound(); t += k) {
             length += getInstantaneousArcLength(t) * k;
@@ -50,6 +50,7 @@ public class ParametricSpline {
                 target += spacing * 2;
             }
         }
+        result.add(new Point(splineX.eval(splineX.getUpperBound()), splineY.eval(splineX.getUpperBound())));
         return result;
     }
 

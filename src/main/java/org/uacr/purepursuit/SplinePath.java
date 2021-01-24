@@ -8,11 +8,16 @@ import java.util.Arrays;
 
 public class SplinePath extends Path {
 
+    private boolean isNaturalSpline;
+    private Double startingAngle = null;
+    private Double endingAngle = null;
+
     /**
      * Pass in an ArrayList of waypoints
      */
     public SplinePath(ArrayList<Point> points) {
         mPoints = points;
+        isNaturalSpline = true;
     }
 
     /**
@@ -22,10 +27,25 @@ public class SplinePath extends Path {
         this(new ArrayList<>(Arrays.asList(points)));
     }
 
+    public SplinePath(Double startingAngle, Double endingAngle, ArrayList<Point> points) {
+        mPoints = points;
+        this.startingAngle = startingAngle;
+        this.endingAngle = endingAngle;
+        isNaturalSpline = false;
+    }
+
+    public SplinePath(Double startingAngle, Double endingAngle, Point... points) {
+        this(startingAngle, endingAngle, new ArrayList<>(Arrays.asList(points)));
+    }
 
     @Override
     protected void fill() {
-        ParametricSpline spline = new ParametricSpline(mPoints);
+        ParametricSpline spline;
+        if (isNaturalSpline) {
+            spline = new ParametricSpline(mPoints);
+        } else {
+            spline = new ParametricSpline(mPoints, startingAngle, endingAngle);
+        }
         mPoints = spline.getPoints(getPointSpacing());
     }
 
