@@ -1,33 +1,61 @@
 package org.uacr.purepursuit.math.spline;
 
-import org.uacr.purepursuit.math.Vector;
+import org.uacr.purepursuit.PathPoint;
+import org.uacr.purepursuit.math.Point;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ParametricSpline {
+    private Spline splineX;
+    private Spline splineY;
 
-    public ParametricSpline() {
-        double[] t = {0, 1, 2, 3, 4};
-        double[] x = {0, 10, 15, 5, 0};
-        double[] y = {0, 5, 15, 10, 0};
-
-        Vector startSlope = new Vector(2, 1).normalize();
-
-        System.out.println(startSlope.getX());
-        System.out.println(startSlope.getY());
-
-        Spline sX = new Spline(t, x, startSlope);
-        Spline sY = new Spline(t, y, startSlope);
-
-        double min = Arrays.stream(t).min().orElse(0);
-        double max = Arrays.stream(t).max().orElse(0);
-
-        double delta = max - min;
-        double step = delta / 100;
-
-        for (int i = 0; i < 101; i++) {
-            System.out.print("(" + sX.eval(min + i * step) + "," + sY.eval(min + i * step) + "),");
+    public ParametricSpline(List<? extends Point> points, double startingHeading, double endingHeading) {
+        double[] t = new double[points.size()];
+        double[] x = new double[points.size()];
+        double[] y = new double[points.size()];
+        for (int i = 0; i < points.size(); i++) {
+            t[i] = i;
+            x[i] = points.get(i).getX();
+            y[i] = points.get(i).getY();
         }
-        System.out.print("\b");
+
+        splineX = new Spline(t, x, startingHeading, endingHeading);
+        splineY = new Spline(t, y, startingHeading, endingHeading);
+    }
+
+    public ParametricSpline(List<? extends Point> points) {
+        double[] t = new double[points.size()];
+        double[] x = new double[points.size()];
+        double[] y = new double[points.size()];
+        for (int i = 0; i < points.size(); i++) {
+            t[i] = i;
+            x[i] = points.get(i).getX();
+            y[i] = points.get(i).getY();
+        }
+
+        splineX = new Spline(t, x);
+        splineY = new Spline(t, y);
+    }
+
+    public ArrayList<Point> getPoints(double spacing) {
+        ArrayList<Point> result = new ArrayList<>();
+        double length = 0;
+        double target = spacing * 2;
+        final double k = 0.001;
+        for (double t = 0; t < splineX.getUpperBound(); t += k) {
+            length += getInstantaneousArcLength(t) * k;
+            if (length >= target) {
+                result.add(new Point(splineX.eval(t), splineY.eval(t)));
+                target += spacing * 2;
+            }
+        }
+        return result;
+    }
+
+    private double getInstantaneousArcLength(double t) {
+        Polynomial xDerivative = splineX.getCurve(t).getDerivative();
+        Polynomial yDerivative = splineY.getCurve(t).getDerivative();
+        return Math.sqrt(Math.pow(xDerivative.eval(t), 2) + Math.pow(yDerivative.eval(t), 2));
     }
 }

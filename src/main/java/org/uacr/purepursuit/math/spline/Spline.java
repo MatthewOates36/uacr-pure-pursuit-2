@@ -37,6 +37,24 @@ public class Spline {
         this(x, y, false, startingAngle, endingAngle);
     }
 
+    public Polynomial getCurve(double x) {
+        for (Polynomial curve : curves) {
+            if (x >= curve.getLowerBound() && x <= curve.getUpperBound()) {
+                return curve;
+            }
+        }
+
+        throw new IllegalArgumentException("Input not in domain of spline");
+    }
+
+    public double getLowerBound() {
+        return curves[0].getLowerBound();
+    }
+
+    public double getUpperBound() {
+        return curves[curves.length - 1].getUpperBound();
+    }
+
     public double eval(double input) {
         for (Polynomial curve : curves) {
             if (input >= curve.getLowerBound() && input <= curve.getUpperBound()) {
@@ -73,7 +91,6 @@ public class Spline {
             // First derivatives are set to angles
             double startingDerivative = Math.tan(Math.toRadians(startingAngle));
             double endingDerivative = Math.tan(Math.toRadians(endingAngle));
-            System.out.println(startingDerivative);
             // b_0 = k
             equationsMatrix[currentRow][1] = 1;
             equationsMatrix[currentRow++][4 * n - 4] = startingDerivative;
@@ -105,8 +122,6 @@ public class Spline {
             equationsMatrix[currentRow][4 * i + 3] = 6 * (x[i + 1] - x[i]);
             equationsMatrix[currentRow++][4 * (i + 1) + 2] = -2;
         }
-
-        printArray(equationsMatrix);
 
         Polynomial[] result = new Polynomial[n - 1];
         double[] coefficients = solveMatrix(equationsMatrix);
@@ -180,50 +195,6 @@ public class Spline {
         double[] temp = matrix[row1];
         matrix[row1] = matrix[row2];
         matrix[row2] = temp;
-    }
-
-    private static class Polynomial {
-        private int order;
-        private double[] coefficients;
-
-        private double lowerBound;
-        private double upperBound;
-        private double offset;
-
-        public Polynomial(int order, double lowerBound, double upperBound, double offset, double... coefficients) {
-            if (coefficients.length != order + 1) {
-                throw new IllegalArgumentException("Polynomial must have the same number of coefficients as its order");
-            }
-            this.order = order;
-            this.lowerBound = lowerBound;
-            this.upperBound = upperBound;
-            this.offset = offset;
-            this.coefficients = coefficients;
-        }
-
-        public double getLowerBound() {
-            return lowerBound;
-        }
-
-        public double getUpperBound() {
-            return upperBound;
-        }
-
-        public double eval(double x) {
-            double result = 0;
-            for (int i = 0; i < coefficients.length; i++) {
-                result += coefficients[i] * Math.pow(x - offset, i);
-            }
-            return result;
-        }
-
-        public String toString() {
-            String result = "Polynomial of order " + order + ": ";
-            for (int i = 0; i < coefficients.length; i++) {
-                result += coefficients[i] + "(x-" + offset + ")^" + i + "+ ";
-            }
-            return result + "\b\b";
-        }
     }
 
     public static void main(String[] args) {
